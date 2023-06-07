@@ -4,6 +4,9 @@
   "description": "full stack open ^part 3",
   "main": "index.js",
   "scripts": {
+    "build:ui": "rm -rf dist && cd ../../part2/phonebook && npm run build && cp -r dist ../../part3/phonebook-backend",
+    "deploy": "git add . && git commit -m ui-build && git push",
+    "deploy:full": "npm run build:ui && npm run deploy",
     "start": "node index.js",
     "test": "echo \"Error: no test specified\" && exit 1",
     "dev": "nodemon index.js"
