@@ -13,10 +13,15 @@ const personSchema = mongoose.Schema({
     name: {
         type: String,
         minLength: 3,
-        required: true
+        required: [true, 'User name required'],
     },
     number: {
-        type: Number,
+        type: String,
+        minLength: 8,
+        validate: {
+            validator: value => (value[2] === '-' || value[3] === '-'),
+            message: 'Number must be of two parts that are separated by - the first part has two or three numbers'
+        },
         required: true
     }
 })
