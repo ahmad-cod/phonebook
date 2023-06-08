@@ -1,6 +1,9 @@
+require('dotenv').config()
 const express = require('express')
 const morgan = require('morgan')
 const cors = require('cors')
+const Person = require('./models/person.js')
+
 const app = express()
 
 app.use(express.json())
@@ -12,6 +15,7 @@ morgan.token('req-body', req => {
 })
 
 app.use(morgan(':method :url :status :res[content-length] - :response-time ms :req-body'))
+
 
 let persons = [
     { 
@@ -41,17 +45,16 @@ app.get('/info', (req, res) => {
 })
 
 app.get('/api/persons', (req, res) => {
-  res.json(persons)
+  Person.find({}).then(persons => {
+    console.log(persons)
+    res.json(persons)
+  })
 })
 
 app.get('/api/persons/:id', (req, res) => {
-    const person = persons.find(p => p.id === parseInt(req.params.id))
-    
-    if (person) {
-      res.json(person)
-    } else {
-      res.status(404).end()
-    }
+  Person.findById(req.params.id)
+  .then(person => res.json(person))
+  .catch(err => res.status(404).json({ error: err.message }))
 })
 
 app.post('/api/persons', (req, res) => {
@@ -63,16 +66,22 @@ app.post('/api/persons', (req, res) => {
   }
   
   // check if name is already in the phonebook
-  const duplicatePerson = persons.find(p => p.name === name)
-  if (duplicatePerson) {
-    res.status(400).send({ error: 'Name must be unique' })
-    return
-  }
+  // const duplicatePerson = persons.find(p => p.name === name)
+  // if (duplicatePerson) {
+  //   res.status(400).send({ error: 'Name must be unique' })
+  //   return
+  // }
 
-  const id = Math.floor(Math.random() * 1236)
+  const person = new Person({
+      name,
+      number
+  })
+  
+  console.log(person)
+  person.save()
+    .then(savedPerson => res.json(savedPerson))
+    .catch(err => res.status(404).json({ error: err.message }))
 
-  persons.push({ id, name, number })
-  res.json({ id, name, number })
 })
 
 app.delete('/api/persons/:id', (req, res) => {
