@@ -51,26 +51,15 @@ app.get('/api/persons', (req, res) => {
   })
 })
 
-app.get('/api/persons/:id', (req, res) => {
+app.get('/api/persons/:id', (req, res, next) => {
   Person.findById(req.params.id)
   .then(person => res.json(person))
-  .catch(err => res.status(404).json({ error: err.message }))
+  .catch(err => next(err))
 })
 
-app.post('/api/persons', (req, res) => {
+app.post('/api/persons', (req, res, next) => {
   console.log(req.body)
   const { name, number } = req.body
-  if(!name || !number || (name == ' ')) {
-    res.status(400).send({ error: 'Invalid name or number' })
-    return
-  }
-  
-  // check if name is already in the phonebook
-  // const duplicatePerson = persons.find(p => p.name === name)
-  // if (duplicatePerson) {
-  //   res.status(400).send({ error: 'Name must be unique' })
-  //   return
-  // }
 
   const person = new Person({
       name,
@@ -80,27 +69,47 @@ app.post('/api/persons', (req, res) => {
   console.log(person)
   person.save()
     .then(savedPerson => res.json(savedPerson))
-    .catch(err => res.status(404).json({ error: err.message }))
+    .catch(err => next(err))
 
 })
 
-app.delete('/api/persons/:id', (req, res) => {
-    const id = parseInt(req.params.id, 10)
+app.delete('/api/persons/:id', (req, res, next) => {
 
-    console.log(id)
-    const person = persons.find(p => p.id === id)
-    
-    if (person) {
-        persons = persons.filter(p => p.id !== id);
-        res.status(204).end()
-        return
-        
-    } else {
-        console.log("couldn't find person", id)
-        res.status(404).end()
-    }
+  Person.findByIdAndRemove(req.params.id)
+    .then(deletedPerson => res.status(204).end())
+    .catch(err => next(err))
 })
 
+app.put('/api/persons/:id', (req, res, next) => {
+  const { name, number } = req.body
+  if(!name ||!number || (name =='')) {
+    res.status(400).send({ error: 'Invalid name or number' })
+  }
+  
+  Person.findByIdAndUpdate(req.params.id, {
+    name,
+    number
+  }, { new: true, runValidators: true, context: 'query' })
+    .then(updatedPerson => res.json(updatedPerson))
+    .catch(err => next(err))
+  }
+)
+
+const unknownEndpoint = (req, res) => res.status(404).send({ error: 'unknown endpoint' })
+// Handle unknown endpoints
+app.use(unknownEndpoint)
+
+const errorHandler = (error, req, res, next) => {
+  console.error(error.message)
+  if (error.name === 'CastError') {
+    return res.status(400).send({ error:'malformatted id' })
+  } else if (error.name === 'ValidationError') {
+    return res.status(400).json({ error: error.message })
+  }
+  next(error)
+}
+// Handle errors
+app.use(errorHandler)
 
 const PORT = process.env.PORT || 3001
 app.listen(PORT, () => {
