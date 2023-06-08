@@ -17,32 +17,9 @@ morgan.token('req-body', req => {
 app.use(morgan(':method :url :status :res[content-length] - :response-time ms :req-body'))
 
 
-let persons = [
-    { 
-      "id": 1,
-      "name": "Arto Hellas", 
-      "number": "040-123456"
-    },
-    { 
-      "id": 2,
-      "name": "Ada Lovelace", 
-      "number": "39-44-5323523"
-    },
-    { 
-      "id": 3,
-      "name": "Dan Abramov", 
-      "number": "12-43-234345"
-    },
-    { 
-      "id": 4,
-      "name": "Mary Poppendieck",
-      "number": "39-23-6423122"
-    }
-]
-
-app.get('/info', (req, res) => {
-    res.send(`<p>Phonebook has info for ${persons.length} people </p> <p>${new Date()}</p>`)
-})
+// app.get('/info', (req, res) => {
+//   res.send(`<p>Phonebook has info for ${persons.length} people </p> <p>${new Date()}</p>`)
+// })
 
 app.get('/api/persons', (req, res) => {
   Person.find({}).then(persons => {
@@ -53,8 +30,8 @@ app.get('/api/persons', (req, res) => {
 
 app.get('/api/persons/:id', (req, res, next) => {
   Person.findById(req.params.id)
-  .then(person => res.json(person))
-  .catch(err => next(err))
+    .then(person => res.json(person))
+    .catch(err => next(err))
 })
 
 app.post('/api/persons', (req, res, next) => {
@@ -62,10 +39,10 @@ app.post('/api/persons', (req, res, next) => {
   const { name, number } = req.body
 
   const person = new Person({
-      name,
-      number
+    name,
+    number
   })
-  
+
   console.log(person)
   person.save()
     .then(savedPerson => res.json(savedPerson))
@@ -76,24 +53,20 @@ app.post('/api/persons', (req, res, next) => {
 app.delete('/api/persons/:id', (req, res, next) => {
 
   Person.findByIdAndRemove(req.params.id)
-    .then(deletedPerson => res.status(204).end())
+    .then(() => res.status(204).end())
     .catch(err => next(err))
 })
 
 app.put('/api/persons/:id', (req, res, next) => {
   const { name, number } = req.body
-  if(!name ||!number || (name =='')) {
-    res.status(400).send({ error: 'Invalid name or number' })
-  }
-  
+
   Person.findByIdAndUpdate(req.params.id, {
     name,
     number
   }, { new: true, runValidators: true, context: 'query' })
     .then(updatedPerson => res.json(updatedPerson))
     .catch(err => next(err))
-  }
-)
+})
 
 const unknownEndpoint = (req, res) => res.status(404).send({ error: 'unknown endpoint' })
 // Handle unknown endpoints
